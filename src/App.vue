@@ -2,10 +2,10 @@
   <div>
     <loading 
       v-model:active="isLoading"
-      :is-full-page="fullPage"/>
+      :is-full-page="true"/>
     <form enctype="multipart/form-data" novalidate>
       <div class="dropbox">
-        <input type="file" :name="uploadFieldName" :disabled="isUploading" @change="filesChange($event.target.name, $event.target.files); fileCount = $event.target.files.length" @click="$event.target.files = null; $event.target.name = null; fileName = ''; currentStatus = 0;postResponse = []"
+        <input required type="file" :name="uploadFieldName" :disabled="isUploading" @change="filesChange($event.target.name, $event.target.files); fileCount = $event.target.files.length" @click="$event.target.files = null; $event.target.name = null; fileName = ''; currentStatus = 0; postResponse = []; deleteFormData()"
           accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, .xls, .xlsx" class="input-file">
           <p v-if="isInitial">
             Drag your file(s) here to begin<br> or click to browse
@@ -23,6 +23,7 @@
       optionLabel="name"
       :editable="true"
       placeholder="Select batch"
+      :required="true"
     />
     <br>
     <br>
@@ -36,14 +37,22 @@
     />
     <br>
     <br>
+    <div class="field-checkbox">
+        <primevue-checkbox inputId="binary" v-model="isZeroCost" :binary="true" />
+        <label for="binary">Allow Zero Cost</label>
+    </div>
+    <br>
+    <br>
     <primevue-button label="Submit" @click="handleUpload"/>
     <br>
     <br>
-    <h3>Status: {{postResponse.Status}}</h3>
+    <download-excel :data="postResponse.DetailAll">
+      <primevue-button label="Excel Report"/>
+    </download-excel>
     <br>
+    <h3>Status: {{postResponse.Status}}</h3>
     <primevue-data-table :value="postResponse.Detail" responsiveLayout="scroll">
       <primevue-table-column field="Item" header="Item"></primevue-table-column>
-      <primevue-table-column field="Success" header="Status"></primevue-table-column>
       <primevue-table-column field="Message" header="Message"></primevue-table-column>
     </primevue-data-table>
   </div>
@@ -53,6 +62,8 @@
 import axios from 'axios'
 import Loading from 'vue-loading-overlay';
 import 'vue-loading-overlay/dist/css/index.css';
+import Swal from 'sweetalert2'
+
 
 const STATUS_INITIAL = 0, STATUS_INPUTED = 1, STATUS_UPLOADING = 2, STATUS_SUCCESS = 3, STATUS_FAILED = 4, BASE_URL = "http://localhost:8000/api/inventory-data-migration/", formData = new FormData();
 
@@ -74,7 +85,8 @@ export default {
       postResponse: [],
 
       fileName: "",
-      isLoading: false
+      isLoading: false,
+      isZeroCost: false
     };
   },
   computed: {
@@ -95,18 +107,46 @@ export default {
     }
   },
   components: {
-      Loading
+      Loading,
+      // Swal
   },
   methods: {
+    deleteFormData(){
+      formData.delete('files');
+    },
     handleUpload(){
-      this.isLoading = true;
-      if(this.selectedBatch.length > 0){
-        this.finalSelectedBatch = this.selectedBatch
-      } else {
+      
+      // console.log(this.selectedBatch.length);
+      if(this.selectedBatch.length == 0){
         this.finalSelectedBatch = this.selectedBatch.name
+      } else {
+        this.finalSelectedBatch = this.selectedBatch
       }
-      formData.append('batch_id', this.finalSelectedBatch);
-      this.save(formData);
+
+      if ((this.finalSelectedBatch == "" || this.finalSelectedBatch == null) && !formData.has('files')){
+        Swal.fire({
+          icon: 'error',
+          title: 'Field Required',
+          text: 'Please fill the batch and the excel file',
+        })
+      } else if ((this.finalSelectedBatch == "" || this.finalSelectedBatch == null) && formData.has('files')){
+        Swal.fire({
+          icon: 'error',
+          title: 'Field Required',
+          text: 'Please fill the batch',
+        })
+      } else if (!(this.finalSelectedBatch == "" || this.finalSelectedBatch == null) && !formData.has('files')){
+        Swal.fire({
+          icon: 'error',
+          title: 'Field Required',
+          text: 'Please fill the excel file',
+        })
+      } else {
+        this.isLoading = true;
+        formData.append('batch_id', this.finalSelectedBatch);
+        formData.append('is_zero_cost', this.isZeroCost == false ? 0 : 1);
+        this.save(formData);
+      }
     },
     reset() {
       // reset form to initial state
@@ -119,11 +159,6 @@ export default {
       const url = `${BASE_URL}`;
       return axios.post(url,formData)
       .then(response => (this.postResponse = response.data));
-          // get data
-          // .then(x => x.data)
-          // // add url field
-          // .then(x => x.map(img => Object.assign({},
-          //     img, { url: `${BASE_URL}/images/${img.id}` })));
     },
     save(formData) {
       // upload data to the server
@@ -136,10 +171,15 @@ export default {
         .catch(err => {
           this.uploadError = err.response;
           this.currentStatus = STATUS_FAILED;
+          this.isLoading = false;
+          Swal.fire({
+          icon: 'error',
+          title: 'Upload error',
+          text: 'Upload error',
+        })
         });
     },
     filesChange(fieldName, fileList) {
-      // const formData = new FormData();
       if (!fileList.length) return;
       Array
         .from(Array(fileList.length).keys())

@@ -14,11 +14,13 @@
     "express-vue": "^5.16.0",
     "nprogress": "^0.2.0",
     "primeflex": "^3.3.0",
-    "primeicons": "^6.0.1",
     "primevue": "^3.20.0",
+    "sweetalert2": "^11.6.14",
     "vue": "^3.2.13",
     "vue-axios": "^3.5.2",
-    "vue-loading-overlay": "^6.0.2"
+    "vue-json-excel3": "^0.0.3",
+    "vue-loading-overlay": "^6.0.2",
+    "vue-router": "^4.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
