@@ -9,7 +9,7 @@
           accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, .xls, .xlsx"
           class="input-file">
         <p v-if="isInitial">
-          Drag your file(s) here to begin<br> or click to browse
+          Drag your excel file here <br> or click to browse
         </p>
         <p v-if="!isInitial">
           {{ fileName }}
@@ -198,7 +198,7 @@ export default {
   outline: 2px dashed grey;
   /* the dash box */
   outline-offset: -10px;
-  background: rgb(223, 223, 223);
+  background: #d1edff;
   color: dimgray;
   padding: 10px 10px;
   min-height: 200px;

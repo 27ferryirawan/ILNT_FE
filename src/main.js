@@ -5,7 +5,8 @@ import App from './App.vue'
 import PrimeVue from 'primevue/config'
 
 import 'primevue/resources/primevue.min.css'
-import 'primevue/resources/themes/rhea/theme.css'
+// import 'primevue/resources/themes/rhea/theme.css'
+import 'primevue/resources/themes/saga-blue/theme.css'
 import 'primeicons/primeicons.css'
 import '/node_modules/primeflex/primeflex.css'
 
